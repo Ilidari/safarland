@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 208 100% 97%;
+    --foreground: 215 28% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 208 100% 97%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 207 79% 66%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 92%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 92%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 16 100% 66%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 207 79% 66%;
+    --radius: 0.8rem;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 207 79% 66%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 16 100% 66%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 207 79% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
+@layer components {
+    .icon-glow {
+        @apply hover:text-primary transition-colors duration-300;
+    }
+}
+
+@keyframes button-glow {
+  0% {
+    box-shadow: 0 0 5px hsl(var(--primary) / 0.5), 0 0 5px hsl(var(--accent) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.7), 0 0 20px hsl(var(--accent) / 0.7);
+  }
+  100% {
+    box-shadow: 0 0 5px hsl(var(--primary) / 0.5), 0 0 5px hsl(var(--accent) / 0.5);
+  }
+}
+
+.animate-button-glow {
+  animation: button-glow 2s infinite;
+}
