@@ -6,6 +6,7 @@ import { translations, LanguageCode } from '@/lib/translations';
 type User = {
   name: string;
   email: string;
+  isAdmin?: boolean;
 };
 
 type Theme = 'light' | 'dark';
@@ -39,6 +40,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } else {
       changeLanguage('fa');
     }
+     const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
   useEffect(() => {
@@ -70,10 +75,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = (userData: User) => {
     setUser(userData);
+     if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
   };
 
   const signOut = () => {
     setUser(null);
+     if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+    }
   };
 
   const toggleTheme = () => {

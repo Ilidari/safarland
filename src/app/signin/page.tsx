@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAppContext } from '@/hooks/use-app-context';
 import Link from 'next/link';
-import { Facebook } from 'lucide-react';
+import { Facebook, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
 import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -20,8 +22,9 @@ const formSchema = z.object({
 });
 
 export default function SignInPage() {
-  const { t, signIn } = useAppContext();
+  const { t, signIn, isRTL } = useAppContext();
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -32,9 +35,14 @@ export default function SignInPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Mock sign in
-    signIn({ email: values.email, name: 'Test User' });
-    router.push('/');
+    if (values.email === 'admin@ilishop.com' && values.password === 'Miladabi666@') {
+      signIn({ email: values.email, name: 'Admin', isAdmin: true });
+      router.push('/admin');
+    } else {
+      // Mock sign in for regular users
+      signIn({ email: values.email, name: 'Test User', isAdmin: false });
+      router.push('/');
+    }
   }
 
   return (
@@ -66,9 +74,18 @@ export default function SignInPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('signin.password')}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} className={cn(isRTL ? 'pl-10' : 'pr-10')} />
+                      </FormControl>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={cn("absolute inset-y-0 flex items-center text-muted-foreground", isRTL ? "left-3" : "right-3")}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -83,7 +100,7 @@ export default function SignInPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
+              <span className="bg-card px-2 text-muted-foreground">
                 {t('auth.continue_with')}
               </span>
             </div>

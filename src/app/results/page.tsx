@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Suspense } from 'react';
@@ -27,7 +28,7 @@ function ResultsComponent() {
   return (
     <div className={`container mx-auto px-4 py-8 ${fontClass}`}>
       <div className="bg-card rounded-lg shadow-sm p-4 mb-6">
-        <h1 className="text-2xl font-bold font-headline">
+        <h1 className="text-2xl font-bold font-headline dark:text-primary">
           {t('results.title')}: {destination}
         </h1>
         <p className="text-muted-foreground">{hotels.length} {t('results.found')}</p>

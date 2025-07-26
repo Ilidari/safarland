@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -39,7 +40,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
       </div>
       <div className="md:w-2/3 flex flex-col">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900">{hotel.name}</CardTitle>
+          <CardTitle className="text-xl font-semibold text-foreground">{hotel.name}</CardTitle>
           <div className="flex items-center text-sm text-muted-foreground pt-1">
             <MapPin className="rtl:ml-1 ltr:mr-1 w-4 h-4" />
             <span>{hotel.location}</span>
@@ -56,7 +57,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-600">({hotel.reviews} {t('hotel.reviews')})</span>
+            <span className="text-sm text-muted-foreground">({hotel.reviews} {t('hotel.reviews')})</span>
           </div>
           <div className="flex items-center gap-3 text-muted-foreground mb-4">
             {hotel.amenities.map(amenity => (
@@ -71,8 +72,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
         </CardContent>
         <CardFooter className="flex justify-between items-center">
           <div>
-            <span className="text-2xl font-bold text-gray-900">${hotel.price}</span>
-            <span className="text-gray-600 text-sm ltr:ml-1 rtl:mr-1">{t('results.per_night')}</span>
+            <span className="text-2xl font-bold text-foreground">${hotel.price}</span>
+            <span className="text-muted-foreground text-sm ltr:ml-1 rtl:mr-1">{t('results.per_night')}</span>
           </div>
           <Button asChild className="bg-primary hover:bg-primary/90">
             <Link href={`/hotel/${hotel.id}`}>{t('results.view_details')}</Link>

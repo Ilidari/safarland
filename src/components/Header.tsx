@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
-import { Menu, X, LogIn, User, Home, Wand2, Ticket, UserPlus, MapPin, LogOut } from "lucide-react";
+import { Menu, X, LogIn, User, Home, Wand2, Ticket, UserPlus, MapPin, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/hooks/use-app-context";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -19,16 +20,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const { t, user, signOut } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const navLinks = [
     { href: "/", label: t("nav.home"), icon: <Home className="h-5 w-5" /> },
     { href: "/bookings", label: t("nav.bookings"), auth: true, icon: <Ticket className="h-5 w-5" /> },
     { href: "/ai-description-generator", label: t("nav.ai_generator"), icon: <Wand2 className="h-5 w-5" /> },
   ];
+
+   const adminLink = { href: "/admin", label: "Admin", auth: true, admin: true, icon: <Shield className="h-5 w-5" /> };
+
 
   const handleSignOut = () => {
     signOut();
@@ -47,9 +53,9 @@ export function Header() {
         </div>
         
         <div className="hidden md:flex items-center gap-2">
-          {navLinks.map(
-            (link) =>
-              (!link.auth || user) && (
+          {navLinks.map((link) => {
+              if (link.auth && !user) return null;
+              return (
                 <Button asChild variant="ghost" size="icon" className="icon-glow rounded-full" key={link.href}>
                   <Link
                     href={link.href}
@@ -59,7 +65,7 @@ export function Header() {
                   </Link>
                 </Button>
               )
-          )}
+          })}
         
           <ThemeSwitcher />
           <LanguageSwitcher />
@@ -87,6 +93,14 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                     {user.isAdmin && (
+                        <DropdownMenuItem asChild className="cursor-pointer">
+                           <Link href={adminLink.href}>
+                            {adminLink.icon}
+                            <span>{adminLink.label}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                       <LogOut className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
                       <span>{t("nav.signout")}</span>
@@ -140,9 +154,9 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-card/95 p-4">
           <nav className="flex flex-col gap-4">
-            {navLinks.map(
-              (link) =>
-                (!link.auth || user) && (
+            {navLinks.map((link) => {
+                if (link.auth && !user) return null;
+                return (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -153,7 +167,17 @@ export function Header() {
                     <span>{link.label}</span>
                   </Link>
                 )
-            )}
+            })}
+             {user?.isAdmin && (
+                  <Link
+                    href={adminLink.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 text-base font-medium transition-colors hover:text-primary p-2 rounded-md"
+                  >
+                    {adminLink.icon}
+                    <span>{adminLink.label}</span>
+                  </Link>
+             )}
             <div className="border-t border-border/20 pt-4">
               {user ? (
                 <div className="flex flex-col items-start gap-4">
