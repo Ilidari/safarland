@@ -12,7 +12,7 @@ export function ThemeSwitcher() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="text-foreground icon-glow rounded-full"
+      className="text-foreground icon-glow rounded-full relative overflow-hidden"
       aria-label="Toggle theme"
     >
       <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

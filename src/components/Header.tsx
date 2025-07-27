@@ -2,9 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Menu, X, LogIn, User, Home, Wand2, Ticket, UserPlus, MapPin, LogOut, Shield } from "lucide-react";
+import { Menu, X, LogIn, User, Wand2, Ticket, UserPlus, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/hooks/use-app-context";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -25,15 +25,23 @@ import { usePathname } from "next/navigation";
 export function Header() {
   const { t, user, signOut } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const navLinks = [
-    { href: "/", label: t("nav.home"), icon: <Home className="h-5 w-5" /> },
     { href: "/bookings", label: t("nav.bookings"), auth: true, icon: <Ticket className="h-5 w-5" /> },
     { href: "/ai-description-generator", label: t("nav.ai_generator"), icon: <Wand2 className="h-5 w-5" /> },
   ];
 
-   const adminLink = { href: "/admin", label: "Admin", auth: true, admin: true, icon: <Shield className="h-5 w-5" /> };
+   const adminLink = { href: "/admin", label: t("nav.admin"), auth: true, admin: true, icon: <Shield className="h-5 w-5" /> };
 
 
   const handleSignOut = () => {
@@ -46,17 +54,32 @@ export function Header() {
   }
 
   return (
-    <header className="bg-card/80 text-card-foreground backdrop-blur-md sticky top-0 z-50 shadow-sm border-b">
-      <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <div className="hidden md:block">
-            <Logo />
+    <header className={cn(
+      "bg-card/80 text-card-foreground backdrop-blur-md sticky top-0 z-50 shadow-sm border-b transition-all duration-300",
+      isScrolled ? "h-20" : "h-28"
+      )}>
+      <div className="relative flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
+        
+        {/* Left Section (Mobile Menu) */}
+        <div className="md:hidden flex-1 flex justify-start">
+             <button
+              className="p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
         </div>
         
-        <div className="hidden md:flex items-center gap-2">
-          {navLinks.map((link) => {
+        {/* Left Section (Desktop) */}
+         <div className="hidden md:flex flex-1 items-center justify-start gap-2">
+           {navLinks.map((link) => {
               if (link.auth && !user) return null;
               return (
-                <Button asChild variant="ghost" size="icon" className="icon-glow rounded-full" key={link.href}>
+                <Button asChild variant="ghost" size="icon" className="icon-glow rounded-full relative overflow-hidden" key={link.href}>
                   <Link
                     href={link.href}
                     title={link.label}
@@ -66,14 +89,22 @@ export function Header() {
                 </Button>
               )
           })}
+        </div>
         
+        {/* Center Section (Logo) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300">
+            <Logo showText={!isScrolled} />
+        </div>
+        
+        {/* Right Section (Desktop) */}
+        <div className="hidden md:flex flex-1 items-center justify-end gap-2">
           <ThemeSwitcher />
           <LanguageSwitcher />
 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="icon-glow group rounded-full">
+                <Button variant="ghost" size="icon" className="icon-glow group rounded-full relative overflow-hidden">
                   <Avatar className="h-8 w-8 border-2 border-transparent group-hover:border-primary/50 transition-all">
                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} alt={user.name} />
                       <AvatarFallback className="bg-transparent text-sm font-bold">
@@ -131,23 +162,7 @@ export function Header() {
              </div>
           )}
         </div>
-        
-        <div className="md:hidden flex-1 flex justify-start">
-             <button
-              className="p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-        </div>
-        <div className="md:hidden flex-1 flex justify-center">
-            <Logo />
-        </div>
-        <div className="md:hidden flex-1" />
+         <div className="md:hidden flex-1" />
 
       </div>
 

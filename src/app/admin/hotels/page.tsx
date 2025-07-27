@@ -1,10 +1,11 @@
+
 "use client";
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { sampleHotels } from '@/lib/data';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Upload, Wifi, Car, UtensilsCrossed, Dumbbell, Waves, Sparkles } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Upload, Wifi, Car, UtensilsCrossed, Dumbbell, Waves, Sparkles, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -16,9 +17,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from "@/lib/utils";
+import type { Hotel } from '@/lib/data';
 
 
 type ObjectFit = 'contain' | 'cover' | 'fill';
+type HotelWithStatus = Hotel & { status: string };
 
 const amenityOptions = [
   { id: 'wifi', label: 'وای‌فای', icon: Wifi },
@@ -31,10 +34,24 @@ const amenityOptions = [
 
 
 export default function AdminHotelsPage() {
-  const hotels = sampleHotels.map(h => ({...h, status: 'فعال'}));
+  const [hotels, setHotels] = useState<HotelWithStatus[]>(sampleHotels.map(h => ({...h, status: 'فعال'})));
   const [isAddHotelOpen, setIsAddHotelOpen] = useState(false);
+  const [editingHotel, setEditingHotel] = useState<HotelWithStatus | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const itemsPerPage = 5;
+
+  
+  // State for new hotel form
+  const [newHotelName, setNewHotelName] = useState('');
+  const [newHotelLocation, setNewHotelLocation] = useState('');
+  const [newHotelDescription, setNewHotelDescription] = useState('');
+  const [newHotelPrice, setNewHotelPrice] = useState('');
+  const [newHotelRating, setNewHotelRating] = useState('');
+  const [newHotelAmenities, setNewHotelAmenities] = useState<string[]>([]);
   const [newHotelImage, setNewHotelImage] = useState<string | null>(null);
   const [newHotelImageFit, setNewHotelImageFit] = useState<ObjectFit>('cover');
+  const [newHotelStatus, setNewHotelStatus] = useState(true);
 
   const handleNewHotelImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -48,8 +65,64 @@ export default function AdminHotelsPage() {
     }
   };
 
+  const handleAmenityChange = (amenityId: string) => {
+    setNewHotelAmenities(prev => 
+      prev.includes(amenityId) 
+        ? prev.filter(id => id !== amenityId)
+        : [...prev, amenityId]
+    );
+  };
+
+  const resetNewHotelForm = () => {
+    setNewHotelName('');
+    setNewHotelLocation('');
+    setNewHotelDescription('');
+    setNewHotelPrice('');
+    setNewHotelRating('');
+    setNewHotelAmenities([]);
+    setNewHotelImage(null);
+    setNewHotelImageFit('cover');
+    setNewHotelStatus(true);
+  };
+
+  const handleAddHotel = () => {
+    const newHotel: HotelWithStatus = {
+      id: Math.max(...hotels.map(h => h.id), 0) + 1,
+      name: newHotelName,
+      location: newHotelLocation,
+      price: Number(newHotelPrice),
+      rating: Number(newHotelRating),
+      reviews: 0,
+      description: newHotelDescription,
+      amenities: newHotelAmenities,
+      image: newHotelImage || 'https://placehold.co/800x600.png',
+      images: [],
+      status: newHotelStatus ? 'فعال' : 'غیرفعال',
+    };
+    setHotels(prev => [newHotel, ...prev]);
+    setIsAddHotelOpen(false);
+    resetNewHotelForm();
+  };
+
+  const handleDelete = (id: number) => {
+    setHotels(prev => prev.filter(hotel => hotel.id !== id));
+  };
+  
+  const handleEdit = (hotel: HotelWithStatus) => {
+    setEditingHotel(hotel);
+  };
+
+  const filteredHotels = hotels.filter(hotel =>
+    hotel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    hotel.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
+  const paginatedHotels = filteredHotels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
@@ -58,7 +131,7 @@ export default function AdminHotelsPage() {
         </div>
          <Dialog open={isAddHotelOpen} onOpenChange={setIsAddHotelOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsAddHotelOpen(true)}>
                     <PlusCircle className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
                     افزودن هتل
                 </Button>
@@ -74,27 +147,27 @@ export default function AdminHotelsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="name" className="dark:text-primary">نام هتل</Label>
-                            <Input id="name" placeholder="مثلا: هتل بزرگ تهران" />
+                            <Input id="name" placeholder="مثلا: هتل بزرگ تهران" value={newHotelName} onChange={e => setNewHotelName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="location" className="dark:text-primary">مکان</Label>
-                            <Input id="location" placeholder="مثلا: تهران، ایران" />
+                            <Input id="location" placeholder="مثلا: تهران، ایران" value={newHotelLocation} onChange={e => setNewHotelLocation(e.target.value)} />
                         </div>
                     </div>
 
                      <div className="space-y-2">
                         <Label htmlFor="description" className="dark:text-primary">توضیحات</Label>
-                        <Textarea id="description" placeholder="توضیحاتی در مورد هتل بنویسید..." />
+                        <Textarea id="description" placeholder="توضیحاتی در مورد هتل بنویسید..." value={newHotelDescription} onChange={e => setNewHotelDescription(e.target.value)} />
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="price" className="dark:text-primary">قیمت (به دلار)</Label>
-                            <Input id="price" type="number" placeholder="مثلا: 180" />
+                            <Input id="price" type="number" placeholder="مثلا: 180" value={newHotelPrice} onChange={e => setNewHotelPrice(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="rating" className="dark:text-primary">امتیاز (از ۵)</Label>
-                            <Input id="rating" type="number" step="0.1" min="0" max="5" placeholder="مثلا: 4.8" />
+                            <Input id="rating" type="number" step="0.1" min="0" max="5" placeholder="مثلا: 4.8" value={newHotelRating} onChange={e => setNewHotelRating(e.target.value)} />
                         </div>
                     </div>
 
@@ -103,7 +176,11 @@ export default function AdminHotelsPage() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {amenityOptions.map((amenity) => (
                           <div key={amenity.id} className="flex items-center gap-2">
-                            <Checkbox id={`amenity-${amenity.id}`} />
+                            <Checkbox 
+                              id={`amenity-${amenity.id}`} 
+                              checked={newHotelAmenities.includes(amenity.id)}
+                              onCheckedChange={() => handleAmenityChange(amenity.id)}
+                            />
                             <div className="grid gap-1.5 leading-none">
                               <label
                                 htmlFor={`amenity-${amenity.id}`}
@@ -166,22 +243,31 @@ export default function AdminHotelsPage() {
                     )}
 
                     <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                        <Switch id="status" />
+                        <Switch id="status" checked={newHotelStatus} onCheckedChange={setNewHotelStatus} />
                         <Label htmlFor="status" className="dark:text-primary">هتل فعال باشد</Label>
                     </div>
                 </div>
 
                 <DialogFooter>
-                  <Button type="submit">ذخیره هتل</Button>
+                  <Button onClick={handleAddHotel}>ذخیره هتل</Button>
                 </DialogFooter>
             </DialogContent>
          </Dialog>
       </CardHeader>
       <CardContent>
-         {/* Add overflow-x-auto for responsiveness */}
+         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div className="relative flex-1 w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="جستجوی هتل..." 
+                  className="pl-10 w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
         <div className="overflow-x-auto">
             <Table className="min-w-full divide-y divide-border">
-              {/* Hide header on small screens */}
               <TableHeader className="hidden md:table-header-group">
                 <TableRow>
                   <TableHead>نام</TableHead>
@@ -193,7 +279,7 @@ export default function AdminHotelsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-border md:divide-none">
-                {hotels.map((hotel) => (
+                {paginatedHotels.map((hotel) => (
                   <TableRow key={hotel.id} className="flex flex-wrap md:table-row mb-4 md:mb-0 border border-border md:border-none rounded-lg p-4 md:p-0">
                     <TableCell className="flex justify-between items-center w-full md:w-auto md:table-cell">
                         <span className="md:hidden font-semibold">نام:</span>
@@ -227,14 +313,17 @@ export default function AdminHotelsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                           <DropdownMenuItem>
+                           <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleEdit(hotel); }}>
                             <Edit className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
                             ویرایش
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                           </DropdownMenuItem>
+                           <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onSelect={(e) => { e.preventDefault(); handleDelete(hotel.id); }}
+                            >
                             <Trash2 className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
                             حذف
-                        </DropdownMenuItem>
+                           </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -244,6 +333,93 @@ export default function AdminHotelsPage() {
         </Table>
         </div>
       </CardContent>
+       <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-6 py-4 gap-4">
+             <div className="text-xs text-muted-foreground">
+                نمایش <strong>{paginatedHotels.length}</strong> از <strong>{filteredHotels.length}</strong> هتل
+             </div>
+             <div className="flex items-center gap-2">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.max(1, p-1))}
+                    disabled={currentPage === 1}>
+                        قبلی
+                </Button>
+                 <span className="text-sm text-muted-foreground">
+                    صفحه {currentPage} از {totalPages}
+                </span>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))}
+                    disabled={currentPage === totalPages}>
+                        بعدی
+                </Button>
+             </div>
+        </CardFooter>
     </Card>
+
+    <Dialog open={!!editingHotel} onOpenChange={(open) => { if (!open) setEditingHotel(null); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="dark:text-primary">ویرایش هتل</DialogTitle>
+        </DialogHeader>
+        {editingHotel && (
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="editing-name" className="dark:text-primary">نام هتل</Label>
+              <Input
+                id="editing-name"
+                value={editingHotel.name}
+                onChange={(e) =>
+                  setEditingHotel({ ...editingHotel, name: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="editing-location" className="dark:text-primary">مکان</Label>
+              <Input
+                id="editing-location"
+                value={editingHotel.location}
+                onChange={(e) =>
+                  setEditingHotel({ ...editingHotel, location: e.target.value })
+                }
+              />
+            </div>
+             <div>
+              <Label htmlFor="editing-price" className="dark:text-primary">قیمت</Label>
+              <Input
+                id="editing-price"
+                type="number"
+                value={editingHotel.price}
+                onChange={(e) =>
+                  setEditingHotel({ ...editingHotel, price: Number(e.target.value) })
+                }
+              />
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            onClick={() => {
+              if (!editingHotel) return;
+              setHotels((prev) =>
+                prev.map((h) => (h.id === editingHotel.id ? editingHotel : h))
+              );
+              setEditingHotel(null);
+            }}
+          >
+            ذخیره تغییرات
+          </Button>
+           <Button variant="outline" onClick={() => setEditingHotel(null)}>
+            لغو
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    </div>
   );
 }
+
+    

@@ -1,39 +1,40 @@
-
 "use client";
 
 import { useAppContext } from "@/hooks/use-app-context";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
-export default function Logo() {
-  const { t } = useAppContext();
+interface LogoProps {
+    showText?: boolean;
+}
+
+export default function Logo({ showText = false }: LogoProps) {
+  const { t, isRTL } = useAppContext();
+
   return (
-    <Link href="/" className="flex flex-col items-center group">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="80"
-        height="60"
-        viewBox="0 0 100 120"
-        className="group-hover:scale-105 transition-transform duration-300"
-      >
-        <g className="fill-primary group-hover:fill-accent transition-colors duration-300">
-          <path d="M50 10C55 20 70 30 60 45C50 35 40 25 50 10Z" />
-          <path d="M50 10C45 20 30 30 40 45C50 35 60 25 50 10Z" />
-          <path d="M50 15C50 20 52 28 50 35C48 28 50 20 50 15Z" />
-
-          <circle cx="20" cy="80" r="4" />
-          <path d="M16 85 Q20 95 24 85" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" className="stroke-primary group-hover:stroke-accent transition-colors duration-300" />
-          
-          <circle cx="50" cy="70" r="5" />
-          <path d="M45 75 Q50 90 55 75" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" className="stroke-primary group-hover:stroke-accent transition-colors duration-300" />
-
-          <circle cx="80" cy="80" r="4" />
-          <path d="M76 85 Q80 95 84 85" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" className="stroke-primary group-hover:stroke-accent transition-colors duration-300" />
-        </g>
-      </svg>
-
-      <p className="text-lg font-bold text-foreground group-hover:text-accent transition-colors duration-300" style={{ fontFamily: "'Vazirmatn', sans-serif" }}>
-        {t('app.title')}
-      </p>
+    <Link href="/" className="group">
+        <div className="flex flex-col items-center p-4 transition-all duration-300">
+            {/* The container for the image with a fixed size */}
+            <div className={cn("transition-all duration-300 w-24 h-24" )}>
+                <Image 
+                    src="/images/safarland-logo.png" 
+                    alt="Safarland Logo" 
+                    width={120}
+                    height={120}
+                    className="object-contain group-hover:scale-105 transition-transform duration-300"
+                />
+            </div>
+            {/* The container for the text that will be shown/hidden */}
+            <div className={cn(
+                "text-center transition-all duration-300",
+                 showText ? "opacity-100 -mt-4" : "opacity-0 h-0 invisible"
+            )}>
+                <h2 className={cn("font-bold text-xl text-muted-foreground", isRTL ? "font-vazir" : "font-headline")}>
+                    {isRTL || t('app.title') === 'سفرلند' ? 'سفرلند' : 'SAFARLAND'}
+                </h2>
+            </div>
+        </div>
     </Link>
   );
 }

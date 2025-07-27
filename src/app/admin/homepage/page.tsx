@@ -19,16 +19,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from "@/lib/utils";
 
 type ObjectFit = 'contain' | 'cover' | 'fill';
+type Destination = typeof popularDestinations[0] & { id: number; status: string; };
 
-const AdminHomepagePage: React.FC = () => {
+
+export default function AdminHomepagePage() {
   const [heroImage, setHeroImage] = useState<string>("https://placehold.co/1280x720.png");
   const [heroImageFit, setHeroImageFit] = useState<ObjectFit>('cover');
-  const [destinations, setDestinations] = useState(popularDestinations.map(d => ({...d, status: 'فعال'})));
+  const [destinations, setDestinations] = useState<Destination[]>(
+    popularDestinations.map((d, i) => ({
+      ...d,
+      id: i + 1,
+      status: 'فعال',
+    }))
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddDestinationOpen, setIsAddDestinationOpen] = useState(false);
   const [newDestinationImage, setNewDestinationImage] = useState<string | null>(null);
   const [newDestinationImageFit, setNewDestinationImageFit] = useState<ObjectFit>('cover');
+  const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 5;
+
+  const handleDelete = (id: number) => {
+    setDestinations((prev) => prev.filter(dest => dest.id !== id));
+  };
+
+  const handleEdit = (dest: Destination) => {
+    setEditingDestination(dest);
+  };
 
   const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,8 +72,12 @@ const AdminHomepagePage: React.FC = () => {
     }
   };
   
-  const totalPages = Math.ceil(destinations.length / itemsPerPage);
-  const paginatedDestinations = destinations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const filteredDestinations = destinations.filter(dest =>
+    dest.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
+  const paginatedDestinations = filteredDestinations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -213,14 +235,13 @@ const AdminHomepagePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                  <div className="relative flex-1 w-full sm:w-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجوی مقصد..." className="pl-10 w-full" />
+                    <Input 
+                      placeholder="جستجوی مقصد..." 
+                      className="pl-10 w-full"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
-                 <div className="flex-shrink-0 w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto" onClick={() => setIsAddDestinationOpen(true)}>
-                      <PlusCircle className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
-                      افزودن مقصد
-                    </Button>
-                 </div>
             </div>
             <div className="overflow-x-auto">
                 <Table className="min-w-full divide-y divide-border">
@@ -235,7 +256,7 @@ const AdminHomepagePage: React.FC = () => {
                     </TableHeader>
                     <TableBody className="divide-y divide-border md:divide-none">
                         {paginatedDestinations.map((dest) => (
-                            <TableRow key={dest.name} className="flex flex-wrap md:table-row mb-4 md:mb-0 border border-border md:border-none rounded-lg p-4 md:p-0">
+                            <TableRow key={dest.id} className="flex flex-wrap md:table-row mb-4 md:mb-0 border border-border md:border-none rounded-lg p-4 md:p-0">
                                 <TableCell className="flex justify-between items-center w-full md:w-auto md:table-cell">
                                     <span className="md:hidden font-semibold">تصویر:</span>
                                     <Avatar className="h-10 w-10 rounded-md">
@@ -267,11 +288,14 @@ const AdminHomepagePage: React.FC = () => {
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                      <DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleEdit(dest); }}>
                                         <Edit className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
                                         ویرایش
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                      <DropdownMenuItem 
+                                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        onSelect={(e) => { e.preventDefault(); handleDelete(dest.id); }}
+                                      >
                                          <Trash2 className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
                                          حذف
                                       </DropdownMenuItem>
@@ -286,7 +310,7 @@ const AdminHomepagePage: React.FC = () => {
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-6 py-4 gap-4">
              <div className="text-xs text-muted-foreground">
-                نمایش <strong>{paginatedDestinations.length}</strong> از <strong>{destinations.length}</strong> مقصد
+                نمایش <strong>{paginatedDestinations.length}</strong> از <strong>{filteredDestinations.length}</strong> مقصد
              </div>
              <div className="flex items-center gap-2">
                 <Button 
@@ -309,10 +333,56 @@ const AdminHomepagePage: React.FC = () => {
              </div>
         </CardFooter>
       </Card>
+      
+      <Dialog open={!!editingDestination} onOpenChange={(open) => { if (!open) setEditingDestination(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="dark:text-primary">ویرایش مقصد</DialogTitle>
+          </DialogHeader>
+          {editingDestination && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="editing-name" className="dark:text-primary">نام مقصد</Label>
+                <Input
+                  id="editing-name"
+                  value={editingDestination.name}
+                  onChange={(e) =>
+                    setEditingDestination({ ...editingDestination, name: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="editing-hint" className="dark:text-primary">توضیح</Label>
+                <Textarea
+                  id="editing-hint"
+                  value={editingDestination.hint}
+                  onChange={(e) =>
+                    setEditingDestination({ ...editingDestination, hint: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                if (!editingDestination) return;
+                setDestinations((prev) =>
+                  prev.map((d) => (d.id === editingDestination.id ? editingDestination : d))
+                );
+                setEditingDestination(null);
+              }}
+            >
+              ذخیره تغییرات
+            </Button>
+             <Button variant="outline" onClick={() => setEditingDestination(null)}>
+              لغو
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-export default AdminHomepagePage;
 
     

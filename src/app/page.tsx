@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -42,7 +43,7 @@ export default function Home() {
       </section>
 
       <section className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center font-headline mb-8">
+        <h2 className="text-3xl font-bold text-center font-headline mb-8 dark:text-primary">
           {t('home.popular')}
         </h2>
         <div className="grid grid-cols-4 grid-rows-4 sm:grid-rows-2 gap-4 h-[600px]">
